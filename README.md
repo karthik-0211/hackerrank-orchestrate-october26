@@ -31,13 +31,66 @@ Your solution must:
 - Generate one prediction row for every request in `dataset/deletion_requests.csv`
 - Write the final predictions to `output.csv` in the repository root
 
-Run the starter Python entry point with:
+Run the Python entry point to generate the final `./output.csv`:
 
 ```bash
 python3 code/main.py
 ```
 
+Run the independent evaluation suite:
+
+```bash
+python3 code/evaluation/main.py
+```
+
+Validate the output against the challenge contract:
+
+```bash
+python3 -c "from code.validator import OutputValidator; v = OutputValidator(); print('Errors:', len(v.validate_file('output.csv', 518)))"
+```
+
 The blank template at `dataset/output.csv` is provided as a reference. Your final generated file for submission must be the root-level `output.csv`.
+
+---
+
+## Solution Architecture
+
+The solution implements an evidence-first, deterministic audit pipeline structured as modular Python components under `code/`:
+
+1. **Identity Resolution (`code/identity.py`):**
+   - Resolves input email addresses across `user_identities.csv` and historical audit logs in `user_audit_log.csv`.
+   - Links stable `user_id`, historical email aliases, phone numbers, full names, and SHA-256 hashes into a unified `IdentityProfile`.
+   - Distinguishes subject records from decoys and unrelated persons.
+
+2. **Request Intent Classification (`code/classifier.py`):**
+   - Evaluates whether `request_text` authorizes deletion.
+   - Accurately filters out non-deletion requests (data exports, billing inquiries, surname updates, marketing opt-outs).
+   - Rejects non-deletion requests as `NOT_APPLICABLE` with `[]` steps.
+
+3. **Multimodal Evidence Indexer (`code/evidence_indexer.py`):**
+   - Recursively parses all 94 evidence files in `dataset/evidence/`:
+     - **JSON:** 28 files parsing nested records, snapshots, and service exports.
+     - **SQL:** 24 database snapshots executed in-memory via SQLite.
+     - **Logs:** 27 files with trace-buffered event correlation across multi-line events.
+     - **PDFs:** Text extraction via `pypdf`.
+     - **Images:** 11 console state facts pre-indexed from administrative screenshots.
+   - Pre-indexes 2,100+ observations upfront for instant sub-second lookup across all 518 cases.
+
+4. **Activity & Data-Flow Tracker (`code/activity_loader.py`):**
+   - Tracks `system_activity.csv` operations, data catalog links (`LINK_RESOURCE_IDENTITY`), connector heartbeats, and worker operations.
+
+5. **Temporal State Reconstructor (`code/state_reconstructor.py`):**
+   - Evaluates the point-in-time state of each resource strictly at `audit_at`.
+   - Enforces temporal cutoffs (`captured_at <= audit_at`), ignoring post-audit evidence.
+   - Distinguishes claims (`reported_status`) from proven state.
+
+6. **Policy Planner & Step Sequencer (`code/policy_planner.py`):**
+   - Strictly enforces `deletion_rules.csv`.
+   - Orders steps by phase (`FINDING` -> `REMEDIATION` -> `VERIFICATION`), operation precedence, `system_id` ASC, and `resource_id` ASC.
+   - Sets non-empty evidence IDs for findings and complete verifications, and empty strings (`""`) for remediation and future checks.
+
+7. **Output Validator (`code/validator.py`):**
+   - Automated conformance engine validating CSV headers, row counts, numerical sorting, JSON syntax, step number continuity, and enum legality.
 
 
 ## Dataset
