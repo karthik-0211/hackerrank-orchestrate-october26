@@ -69,15 +69,29 @@ class StateReconstructor:
         account_resource_id = ""
         security_resource_id = ""
 
-        # Check activities for deletion_worker targeting account_service
+        rep_status = request_row.get("reported_status", "")
+        expected_result = "SUCCESS" if rep_status == "COMPLETE" else ("PARTIAL" if rep_status == "PARTIALLY_COMPLETE" else "FAILED")
+
+        acc_candidates = []
+        sec_candidates = []
         for act in window_activities:
-            # Check time proximity to reported_at (within 2 hours)
             t = act.event_time
-            if t[:10] == rep_at[:10] and abs((int(t[11:13])*60 + int(t[14:16])) - (int(rep_at[11:13])*60 + int(rep_at[14:16]))) <= 120:
-                if act.target_system == "account_service" and act.event_type == "DELETE_RECORD":
-                    account_resource_id = act.resource_id
-                elif act.target_system in ["archive_service", "security_service"] and act.event_type == "RETAIN_RECORD":
-                    security_resource_id = act.resource_id
+            if t[:10] == rep_at[:10]:
+                diff = abs((int(t[11:13])*60 + int(t[14:16])) - (int(rep_at[11:13])*60 + int(rep_at[14:16])))
+                if diff <= 120:
+                    if act.target_system == "account_service" and act.event_type == "DELETE_RECORD":
+                        score = 0 if act.reported_result == expected_result else 1
+                        acc_candidates.append((score, diff, act.resource_id))
+                    elif act.target_system in ["archive_service", "security_service"] and act.event_type == "RETAIN_RECORD":
+                        sec_candidates.append((diff, act.resource_id))
+
+        if acc_candidates:
+            acc_candidates.sort(key=lambda x: (x[0], x[1]))
+            account_resource_id = acc_candidates[0][2]
+
+        if sec_candidates:
+            sec_candidates.sort(key=lambda x: x[0])
+            security_resource_id = sec_candidates[0][1]
 
         # Also check if any subject observation gives the primary account or security resource
         for obs in subject_obs:

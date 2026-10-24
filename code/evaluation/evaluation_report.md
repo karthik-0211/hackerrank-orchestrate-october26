@@ -44,10 +44,10 @@ The evaluation was performed across two independent test suites:
 | Metric | Result | Denominator / Basis |
 | :--- | :--- | :--- |
 | **Status Accuracy** | **100.00%** | **32 / 32 cases** |
-| **Step Precision** | **80.10%** | 165 / 206 predicted steps |
-| **Step Recall** | **85.49%** | 165 / 193 expected steps |
-| **Step F1 Score** | **82.71%** | Harmonic mean of precision & recall |
-| **Exact Sequence Accuracy** | **9.38%** | 3 / 32 cases |
+| **Step Precision** | **85.07%** | 171 / 201 predicted steps |
+| **Step Recall** | **88.60%** | 171 / 193 expected steps |
+| **Step F1 Score** | **86.80%** | Harmonic mean of precision & recall |
+| **Exact Sequence Accuracy** | **18.75%** | 6 / 32 cases |
 
 ### 3.2 Breakdown by Status Category (Public 32 Cases)
 - `COMPLETE` cases: 14 / 14 identified correctly (100%)
