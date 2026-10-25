@@ -37,26 +37,26 @@ Reported workflow statuses and operation results are merely **claims**. The audi
 
 ```mermaid
 flowchart TD
-    A[dataset/deletion_requests.csv] --> B[code/classifier.py: RequestClassifier]
-    B -->|Non-Deletion Intent| C[NOT_APPLICABLE: steps_json = []]
-    B -->|Authorized Deletion| D[code/identity.py: IdentityResolver]
+    A["dataset/deletion_requests.csv"] --> B["code/classifier.py (RequestClassifier)"]
+    B -->|"Non-Deletion Intent"| C["NOT_APPLICABLE (steps_json = [])"]
+    B -->|"Authorized Deletion"| D["code/identity.py (IdentityResolver)"]
     
-    E[dataset/user_identities.csv] --> D
-    F[dataset/user_audit_log.csv] --> D
+    E["dataset/user_identities.csv"] --> D
+    F["dataset/user_audit_log.csv"] --> D
     
-    G[dataset/evidence_files.csv & dataset/evidence/*] --> H[code/evidence_indexer.py: EvidenceIndexer]
-    H -->|2,122 Observations: SQL, JSON, Logs, PDF, Images| I[code/state_reconstructor.py: StateReconstructor]
+    G["dataset/evidence/ (94 Multimodal Files)"] --> H["code/evidence_indexer.py (EvidenceIndexer)"]
+    H -->|"2,122 Observations (SQL, JSON, Logs, PDF, PNG)"| I["code/state_reconstructor.py (StateReconstructor)"]
     
-    J[dataset/system_activity.csv] --> K[code/activity_loader.py: ActivityLoader]
+    J["dataset/system_activity.csv"] --> K["code/activity_loader.py (ActivityLoader)"]
     K --> I
     D --> I
     
-    I -->|Temporal Cutoff: captured_at <= audit_at| L[code/policy_planner.py: PolicyPlanner]
-    M[dataset/deletion_rules.csv] --> L
+    I -->|"Temporal Cutoff (captured_at <= audit_at)"| L["code/policy_planner.py (PolicyPlanner)"]
+    M["dataset/deletion_rules.csv"] --> L
     
-    L --> N[FINDING -> REMEDIATION -> VERIFICATION Sequencing]
-    N --> O[code/validator.py: OutputValidator]
-    O --> P[./output.csv: 518 Validated Rows]
+    L --> N["FINDING -> REMEDIATION -> VERIFICATION Sequencing"]
+    N --> O["code/validator.py (OutputValidator)"]
+    O --> P["./output.csv (518 Validated Rows)"]
 ```
 
 ### Modular Pipeline Structure (`code/`)
