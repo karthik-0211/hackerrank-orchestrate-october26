@@ -1,0 +1,3 @@
+# Core dependencies for Ghost Data Deletion Audit Agent
+# All other components use the Python Standard Library (sqlite3, json, csv, re, hashlib, dataclasses)
+pypdf>=4.0.0
